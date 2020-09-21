@@ -94,7 +94,7 @@ if __name__=='__main__':
     print('Test is a success.')
 #    df = load_gravity(table='domainlist')
 #    test_df = pd.DataFrame({'id':[1],'type':[1],'domain':'old.reddit.com','enabled':[1],'date_added':1600316117,
-                            'date_modified':1600316117,'comment':'just a test domain'})
+#                            'date_modified':1600316117,'comment':'just a test domain'})
 #    update_gravity(pd.concat([df,test_df]))
 #id                                  1
 #type                                1
