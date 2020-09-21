@@ -1,3 +1,3 @@
 # Photon Sphere
 
-![Image of Messier 87](https://github.com/jkerrigan/photon_sphere/blob/master/images/messier_87.jpg =128x128)
+![Image of Messier 87](https://github.com/jkerrigan/photon_sphere/blob/master/images/messier_87.jpg){:height="128px" width="128px"}
