@@ -1,3 +1,3 @@
 # Photon Sphere
 
-![Image of Messier 87](https://github.com/jkerrigan/photon_sphere/blob/master/images/messier_87.jpg?s=128)
+<a href="url"><img src="https://github.com/jkerrigan/photon_sphere/blob/master/images/messier_87.jpg" align="left" height="128" width="128" ></a>
