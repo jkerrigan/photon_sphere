@@ -3,3 +3,4 @@ numpy
 sqlalchemy
 pandas
 python-coveralls
+sentencepiece
