@@ -18,8 +18,8 @@ def make_multilabel(x):
     y[range(len(x_))] = x_
     return y
 
-def load_gravity(table='gravity'):
-    db_connect = create_engine('sqlite:////etc/pihole/gravity.db')
+def load_gravity(dir='/etc/pihole/',table='gravity'):
+    db_connect = create_engine('sqlite:///'+dir+'gravity.db')
     connection = db_connect.raw_connection()
     df = pd.read_sql("SELECT * FROM {}".format(table), con=connection)
     connection.close()
@@ -52,19 +52,25 @@ def load_tokenizer():
     with open('tokenizer.pickle', 'rb') as handle:
         tokenizer = pickle.load(handle)
     return tokenizer
+
+def load_sentpice():
+    serialized_model_proto = tensorflow.gfile.GFile('./sentpiece/m.model', 'rb').read()
+    sp = spm.SentencePieceProcessor()
+    sp.load_from_serialized_proto(serialized_model_proto)
+    return sp
         
 def parse_data(df):
     format_df = df.groupby('timestamp').sum().reset_index()
     format_df['domain'] = df.groupby('timestamp')['domain'].apply(lambda x: ' '.join(x)).reset_index()['domain']
     format_df['domain_list'] = df.groupby('timestamp')['domain'].apply(lambda x: ','.join(x)).reset_index()['domain']
     format_df['mask_count'] = df.groupby('timestamp')['domain'].apply(lambda x: len(x)).reset_index()['domain']
-    format_df['domain'] = format_df['domain'].apply(lambda x: ' '.join(x.split('.')))
+    #format_df['domain'] = format_df['domain'].apply(lambda x: ' '.join(x.split('.')))
     format_df['blocked_chain'] = df.groupby('timestamp')['blocked'].apply(lambda x: ' '.join([str(i) for i in x])).reset_index()['blocked']
     return format_df
 
 def prep_data(df,tokenizer=None):
-    encoded_docs = tokenizer.texts_to_sequences(df.domain.values)
-    encoded_docs = pad_sequences(encoded_docs,300,padding='post')
+    encoded_docs = list(map(tokenizer.encode_as_ids,df.domain.values))#tokenizer.texts_to_sequences(df.domain.values)
+    encoded_docs = pad_sequences(encoded_docs,100,padding='post')
     masks = np.array(list(map(make_mask,df.mask_count)))
     labels = np.array(list(map(make_multilabel,df.blocked_chain.values)))
     return encoded_docs,masks,labels

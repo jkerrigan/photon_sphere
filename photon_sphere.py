@@ -27,7 +27,9 @@ if __name__=='__main__':
         print(bad_domains)
         if (len(bad_domains) > 0) and (i != 0):
             print('Ad domains being vaporized in the photon sphere...')
-            os.system('pihole -b {0}'.format(bad_domains))
+            with open('photonSphere_list.txt','a') as f:
+                [f.write('\n{0}'.format(i)) for i in bad_domains]
+#            os.system('pihole -b {0}'.format(bad_domains))
             #bad_df = fn.create_dframe(bad_domains,max_timestamp)
             #df = pd.concat([df,bad_df])
             #fn.update_gravity(df)
