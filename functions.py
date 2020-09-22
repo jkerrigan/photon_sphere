@@ -3,7 +3,6 @@ import numpy as np
 import pickle
 from sqlalchemy import create_engine
 import pandas as pd
-import tensorflow
 import time
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
@@ -53,8 +52,8 @@ def load_tokenizer():
         tokenizer = pickle.load(handle)
     return tokenizer
 
-def load_sentpice():
-    serialized_model_proto = tensorflow.gfile.GFile('./sentpiece/m.model', 'rb').read()
+def load_sentpiece():
+    serialized_model_proto = tf.gfile.GFile('./sentpiece/m.model', 'rb').read()
     sp = spm.SentencePieceProcessor()
     sp.load_from_serialized_proto(serialized_model_proto)
     return sp
@@ -92,7 +91,7 @@ def run_all(tokenizer=None,timestamp=None):
     return token_data,mask_data,labels,parsed_dframe,most_recent_timestamp
 
 def load_model():
-    model = tensorflow.keras.models.load_model('./dns_anhilator.h5')
+    model = tf.keras.models.load_model('./dns_anhilator.h5')
     return model
 
 

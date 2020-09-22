@@ -1,5 +1,5 @@
 import functions as fn
-
+import pandas as pd
 
 def test_mask():
     mask = fn.make_mask(10)
