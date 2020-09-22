@@ -6,6 +6,7 @@ import pandas as pd
 import time
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 import tensorflow
+import sentencepiece as spm
 
 def make_mask(x):
     y = np.zeros(100)
