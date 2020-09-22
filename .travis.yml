@@ -11,5 +11,5 @@ install:
 script:
  - py.test --cov-report term --cov=. test.py
  
- after_success:
-  - coveralls
+after_success:
+ - coveralls
