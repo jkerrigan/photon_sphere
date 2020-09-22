@@ -11,7 +11,7 @@ import os
 if __name__=='__main__':
 
     gravity = fn.load_gravity()['domain'].values
-    tokenizer = fn.load_tokenizer()
+    tokenizer = fn.load_yttm()
     max_timestamp = 1600397395 # arbitrary recent timestamp
     model = fn.load_model()
     df = fn.load_gravity(table='domainlist')

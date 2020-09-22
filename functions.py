@@ -6,7 +6,7 @@ import pandas as pd
 import time
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 import tensorflow
-import sentencepiece as spm
+import youtokentome as yttm
 
 def make_mask(x):
     y = np.zeros(100)
@@ -59,6 +59,11 @@ def load_sentpiece():
     sp = spm.SentencePieceProcessor()
     sp.load_from_serialized_proto(serialized_model_proto)
     return sp
+
+def load_yttm():
+    model_path = './yttm_model/yttm_ads.model'
+    bpe = yttm.BPE(model=model_path)
+    return bpe
         
 def parse_data(df):
     format_df = df.groupby('timestamp').sum().reset_index()
@@ -70,7 +75,7 @@ def parse_data(df):
     return format_df
 
 def prep_data(df,tokenizer=None):
-    encoded_docs = list(map(tokenizer.encode_as_ids,df.domain.values))#tokenizer.texts_to_sequences(df.domain.values)
+    encoded_docs = list(tokenizer.encode(list(df.domain.values), output_type=yttm.OutputType.ID))
     encoded_docs = pad_sequences(encoded_docs,100,padding='post')
     masks = np.array(list(map(make_mask,df.mask_count)))
     labels = np.array(list(map(make_multilabel,df.blocked_chain.values)))
