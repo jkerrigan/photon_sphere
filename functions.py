@@ -5,6 +5,7 @@ from sqlalchemy import create_engine
 import pandas as pd
 import time
 from tensorflow.keras.preprocessing.sequence import pad_sequences
+import tensorflow
 
 def make_mask(x):
     y = np.zeros(100)
@@ -53,7 +54,7 @@ def load_tokenizer():
     return tokenizer
 
 def load_sentpiece():
-    serialized_model_proto = tf.gfile.GFile('./sentpiece/m.model', 'rb').read()
+    serialized_model_proto = tensorflow.gfile.GFile('./sentpiece/m.model', 'rb').read()
     sp = spm.SentencePieceProcessor()
     sp.load_from_serialized_proto(serialized_model_proto)
     return sp
