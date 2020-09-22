@@ -6,9 +6,10 @@ install:
  - pip install -r requirements.txt
  - pip install coveralls
  - pip install pytest-cov
+ - pip install pytest
 
 script:
- - py.test --cov=. test.py
+ - py.test --cov-report term --cov=. test.py
  
  after_success:
   - coveralls
