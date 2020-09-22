@@ -98,7 +98,7 @@ def run_all(tokenizer=None,timestamp=None):
     return token_data,mask_data,labels,parsed_dframe,most_recent_timestamp
 
 def load_model():
-    model = tf.keras.models.load_model('./dns_anhilator.h5')
+    model = tf.keras.models.load_model('./models/dns_anhilator.h5')
     return model
 
 
