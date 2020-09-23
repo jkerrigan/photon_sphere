@@ -101,7 +101,19 @@ def load_model():
     model = tf.keras.models.load_model('./models/dns_anhilator.h5')
     return model
 
+def online_learn(learner,ref):
+    learner_entropy = -np.sum(learner*np.log(learner+1e-5*np.random.randn(np.shape(learner)[1])))
+    ref_entropy = -np.sum(ref*np.log(ref+1e-5*np.random.randn(np.shape(ref)[1])))
 
+    learner_labels = np.where(learner > 0.5, 1, 0)
+    ref_labels = np.where(ref > 0.5, 1, 0)
+    print('Models diverge:'.format(bool(sum(learner_labels==ref_labels)/ref_labels.size)))
+    if learner_entropy > ref_entropy:
+        candidate_labels = np.where(learner > np.random.normal(0.5,scale=0.05),1,0)
+    else:
+        candidate_labels = np.where(ref > np.random.normal(0.5,scale=0.05),1,0)
+    return candidate_labels
+        
 if __name__=='__main__':
     print('Test is a success.')
 #    df = load_gravity(table='domainlist')
