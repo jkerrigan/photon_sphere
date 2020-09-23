@@ -9,9 +9,9 @@
 Photon Sphere attempts to provide a machine learning approach to identifying ad-serving domains for use along with Pi-Hole and is entirely deployable on a Raspberry Pi. Model uses the unsupervised text tokenizer YouTokenToMe to parse and tokenize domains for use in a lightweight embedding model. Ideally, common elements (e.g. domain names having words such as 'ads' or 'tracker') among prior known domains (training dataset) can be used to identify domains that would traditionally require parsing by hand or an exceptionally complicated regex. The model uses a contextual domain request approach to identifying adware related DNS requests by bucketing DNS requests according to some time cadence (1 sec by default). This allows for the model to account for the burst like nature of many ad-serving and tracking website DNS requests that occur almost simultaneously when a website is accessed.
 
 ## Notes
-- bucketing cadence has a buffer size of 100 DNS requests (see below for example)
+- bucketing cadence has an initial buffer size of 100 DNS requests (see below for example)
 - YouTokenToMe(YTTM) vocab size is 500 by default (too large results in overfitting)
-- Model can be run actively or on stored Pi-Hole DNS logs
+- Model can be run actively or on the archived Pi-Hole SQL DNS query logs
 
 `[domain1.adserv.com domain2.adserv.com ... domain100.adserv.com]` <- 1 sec bucket
 
