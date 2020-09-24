@@ -25,15 +25,19 @@ if __name__=='__main__':
     bad_domains_all = []
     while True:
         tokens,masks,labels,parsed_df,max_timestamp = fn.run_all(tokenizer=tokenizer,timestamp=max_timestamp)
-        print('{0} pieces of matter entering the photon sphere..'.format(len(tokens)))
+        if i == 0:
+            i =+ 1
+            continue
+        print('{0} pieces of matter entering the photon sphere..'.format(parsed_df.mask_count))
+        print(tokens.shape)
         pred_probs = model.predict([tokens,masks])
         ref_pred_probs = ref_model.predict([tokens,masks])
         predicted = np.where(pred_probs>0.5,1,0).astype(bool)
         ref_predicted = np.where(ref_pred_probs>0.5,1,0).astype(bool)
         
-        domain_lists = list(map(lambda x: x.split(','),parsed_df.domain_list.values))
-        bad_domains = list(map(lambda x: np.array(x[0])[x[1][:len(x[0])]],zip(domain_lists,predicted)))
-        bad_domains = [i[0] for i in bad_domains if len(i)>0]
+        domain_lists = parsed_df.domain_list.split(',')#list(map(lambda x: x.split(','),parsed_df.domain_list.values))
+        bad_domains = np.array(domain_lists)[predicted[0,:len(domain_lists)]]#[np.array(x[0])[x[1][:len(x[0])]] for x in zip(domain_lists,predicted)]
+        #bad_domains = [i for i in bad_domains if len(i)>0]
         bad_domains = [i for i in bad_domains if i not in gravity and i not in df['domain'].values and i not in bad_domains_all]
         bad_domains_all.extend(bad_domains)
         print(bad_domains)

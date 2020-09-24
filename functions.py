@@ -10,6 +10,7 @@ import youtokentome as yttm
 
 def make_mask(x):
     y = np.zeros(100)
+    print(x)
     y[:x] = 1
     return y
 
@@ -67,7 +68,7 @@ def load_yttm():
         
 def parse_data(df):
     format_df = df.groupby('timestamp').sum().reset_index()
-    format_df['domain'] = df.groupby('timestamp')['domain'].apply(lambda x: ' '.join(x)).reset_index()['domain']
+    format_df['domain'] = df.groupby('timestamp')['domain'].apply(lambda x: '|'.join(x)).reset_index()['domain']
     format_df['domain_list'] = df.groupby('timestamp')['domain'].apply(lambda x: ','.join(x)).reset_index()['domain']
     format_df['mask_count'] = df.groupby('timestamp')['domain'].apply(lambda x: len(x)).reset_index()['domain']
     #format_df['domain'] = format_df['domain'].apply(lambda x: ' '.join(x.split('.')))
@@ -75,10 +76,11 @@ def parse_data(df):
     return format_df
 
 def prep_data(df,tokenizer=None):
-    encoded_docs = list(tokenizer.encode(list(df.domain.values), output_type=yttm.OutputType.ID))
+    print(df.domain)
+    encoded_docs = tokenizer.encode([df.domain], output_type=yttm.OutputType.ID) #change null space to |
     encoded_docs = pad_sequences(encoded_docs,100,padding='post')
-    masks = np.array(list(map(make_mask,df.mask_count)))
-    labels = np.array(list(map(make_multilabel,df.blocked_chain.values)))
+    masks = make_mask(df.mask_count).reshape(1,-1)
+    labels = make_multilabel(df.blocked_chain).reshape(1,-1)
     return encoded_docs,masks,labels
 
 def run_all(tokenizer=None,timestamp=None):
@@ -93,7 +95,7 @@ def run_all(tokenizer=None,timestamp=None):
         dframe = load_query_list(timestamp=timestamp)
         i+=1
     most_recent_timestamp = dframe.timestamp.iloc[-1]
-    parsed_dframe = parse_data(dframe)
+    parsed_dframe = parse_data(dframe).iloc[-1] # pull a single timestamp
     token_data,mask_data,labels = prep_data(parsed_dframe,tokenizer=tokenizer)
     return token_data,mask_data,labels,parsed_dframe,most_recent_timestamp
 
@@ -107,7 +109,7 @@ def online_learn(learner,ref):
 
     learner_labels = np.where(learner > 0.5, 1, 0)
     ref_labels = np.where(ref > 0.5, 1, 0)
-    print('Models diverge:'.format(bool(sum(learner_labels==ref_labels)/ref_labels.size)))
+    print('Models diverge: {0}'.format(np.sum(learner_labels==ref_labels)/ref_labels.size < 1))
     if learner_entropy > ref_entropy:
         candidate_labels = np.where(learner > np.random.normal(0.5,scale=0.05),1,0)
     else:
