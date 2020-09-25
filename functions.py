@@ -104,17 +104,19 @@ def load_model():
     model = tf.keras.models.load_model('./models/dns_anhilator.h5')
     return model
 
-def online_learn(learner,ref):
+def online_learn(learner,ref,eps=0.1):
     learner_entropy = -np.sum(learner*np.log(learner+1e-5*np.random.randn(np.shape(learner)[1])))
     ref_entropy = -np.sum(ref*np.log(ref+1e-5*np.random.randn(np.shape(ref)[1])))
 
     learner_labels = np.where(learner > 0.5, 1, 0)
     ref_labels = np.where(ref > 0.5, 1, 0)
     print('Models diverge: {0}'.format(np.sum(learner_labels==ref_labels)/ref_labels.size < 1))
-    if learner_entropy > ref_entropy:
-        candidate_labels = np.where(learner > np.random.normal(0.5,scale=0.05),1,0)
+    if np.random.rand() > eps:
+        candidate_labels = np.where(ref > 0.5, 1, 0)
     else:
-        candidate_labels = np.where(ref > np.random.normal(0.5,scale=0.05),1,0)
+        print('Epsilon!')
+        candidates = np.argmin(masks[test][i:i+1])
+        candidate_labels = make_multilabel(' '.join([str(int(i)) for i in np.random.randint(0,2,size=(candidates))])).reshape(1,-1)
     return candidate_labels
         
 if __name__=='__main__':

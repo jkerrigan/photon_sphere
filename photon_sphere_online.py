@@ -28,8 +28,8 @@ if __name__=='__main__':
     ref_model.set_weights(model.get_weights())
 
     model.optimizer.lr.assign(1e-4)
-    
     df = fn.load_gravity(table='domainlist')
+    epsilon = 0.1
     i = 0
     bad_domains_all = []
     while True:
@@ -44,8 +44,8 @@ if __name__=='__main__':
         predicted = np.where(pred_probs>0.5,1,0).astype(bool)
         ref_predicted = np.where(ref_pred_probs>0.5,1,0).astype(bool)
         
-        domain_lists = parsed_df.domain_list.split(',')#list(map(lambda x: x.split(','),parsed_df.domain_list.values))
-        bad_domains = np.array(domain_lists)[predicted[0,:len(domain_lists)]]#[np.array(x[0])[x[1][:len(x[0])]] for x in zip(domain_lists,predicted)]
+        domain_lists = parsed_df.domain_list.split(',')
+        bad_domains = np.array(domain_lists)[predicted[0,:len(domain_lists)]]
         #bad_domains = [i for i in bad_domains if len(i)>0]
         bad_domains = [i for i in bad_domains if i not in gravity and i not in df['domain'].values and i not in bad_domains_all]
         bad_domains_all.extend(bad_domains)
@@ -58,13 +58,10 @@ if __name__=='__main__':
             #bad_df = fn.create_dframe(bad_domains,max_timestamp)
             #df = pd.concat([df,bad_df])
             #fn.update_gravity(df)
-        online_labels = fn.online_learn(pred_probs,ref_pred_probs)
+        online_labels = fn.online_learn(pred_probs,ref_pred_probs,eps=epsilon)
         model.fit([tokens,masks],online_labels)
         time.sleep(2)
         i+=1
         if logging:
             diverged = np.sum(predicted==ref_predicted)/predicted.size < 1
             logger('\n{0} : {1} : {2} : {3}'.format(time.time(),','.join(domain_lists),predicted[0,:len(domain_lists)].astype(int),diverged))
-    #    if (i%1000 == 0) and (i!=0):
-    #        print('Flushing cache and restarting dns..')
-    #        os.system('pihole restartdns')
