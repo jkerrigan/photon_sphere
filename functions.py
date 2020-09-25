@@ -77,10 +77,10 @@ def parse_data(df):
 
 def prep_data(df,tokenizer=None):
     print(df.domain)
-    encoded_docs = tokenizer.encode([df.domain], output_type=yttm.OutputType.ID) #change null space to |
+    encoded_docs = tokenizer.encode(list(df.domain.values), output_type=yttm.OutputType.ID) #change null space to |
     encoded_docs = pad_sequences(encoded_docs,100,padding='post')
-    masks = make_mask(df.mask_count).reshape(1,-1)
-    labels = make_multilabel(df.blocked_chain).reshape(1,-1)
+    masks = make_mask(df.mask_count.values[0]).reshape(1,-1)
+    labels = make_multilabel(df.blocked_chain.values[0]).reshape(1,-1)
     return encoded_docs,masks,labels
 
 def run_all(tokenizer=None,timestamp=None):
@@ -91,10 +91,11 @@ def run_all(tokenizer=None,timestamp=None):
     while len(dframe) < 1:
         if i == 0:
             print('Awaiting additional matter...')
-        time.sleep(1)
+        time.sleep(2)
         dframe = load_query_list(timestamp=timestamp)
         i+=1
     most_recent_timestamp = dframe.timestamp.iloc[-1]
+    dframe['timestamp'] = dframe.timestamp.round(-1)
     parsed_dframe = parse_data(dframe).iloc[-1] # pull a single timestamp
     token_data,mask_data,labels = prep_data(parsed_dframe,tokenizer=tokenizer)
     return token_data,mask_data,labels,parsed_dframe,most_recent_timestamp

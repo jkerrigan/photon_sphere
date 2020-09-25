@@ -9,7 +9,16 @@ import pandas as pd
 import os
 
 
+logging = True
+
+def logger(metadata):
+    with open('online.log','a') as f:
+        f.write(metadata)
+if logging:
+    logger('timestamp(s) : dns bucket : predictions : diverged')
+
 if __name__=='__main__':
+
     gravity = fn.load_gravity()['domain'].values
     tokenizer = fn.load_yttm()
     max_timestamp = 1600397395 # arbitrary recent timestamp
@@ -51,8 +60,11 @@ if __name__=='__main__':
             #fn.update_gravity(df)
         online_labels = fn.online_learn(pred_probs,ref_pred_probs)
         model.fit([tokens,masks],online_labels)
-        time.sleep(1)
+        time.sleep(2)
         i+=1
+        if logging:
+            diverged = np.sum(predicted==ref_predicted)/predicted.size < 1
+            logger('\n{0} : {1} : {2} : {3}'.format(time.time(),','.join(domain_lists),predicted[0,:len(domain_lists)].astype(int),diverged))
     #    if (i%1000 == 0) and (i!=0):
     #        print('Flushing cache and restarting dns..')
     #        os.system('pihole restartdns')
