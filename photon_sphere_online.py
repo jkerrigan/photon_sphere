@@ -24,8 +24,8 @@ if __name__=='__main__':
     max_timestamp = 1600397395 # arbitrary recent timestamp
 
     model = fn.load_model() #model that learns online
-#    ref_model = tf.keras.models.clone_model(model) #reference model
-#    ref_model.set_weights(model.get_weights())
+    ref_model = tf.keras.models.clone_model(model) #reference model
+    ref_model.set_weights(model.get_weights())
 
     model.optimizer.lr.assign(1e-4)
     df = fn.load_gravity(table='domainlist')
@@ -37,10 +37,16 @@ if __name__=='__main__':
         if i == 0:
             i =+ 1
             continue
-        print('{0} pieces of matter entering the photon sphere..'.format(parsed_df.mask_count))
-        print(tokens.shape)
-        pred_probs = model.predict([queries,neg_samples,anchor_samples])
-        #ref_pred_probs = ref_model.predict([tokens,masks])
+        print('{0} pieces of matter entering the photon sphere..'.format(len(parsed_df)))
+#        print(tokens.shape)
+        print('queries shape',np.shape(queries))
+        print('anchor shape',np.shape(anchor_samples))
+        domain_lists = parsed_df.domain.values
+        #pred_probs = model.predict([queries,neg_samples,anchor_samples])
+        pred_probs = np.array(list(map(lambda x:fn.multi_pred(model,x,neg_samples,anchor_samples),queries)))
+        ref_pred_probs = np.array(list(map(lambda x:fn.multi_pred(ref_model,x,neg_samples,anchor_samples),queries)))
+        print(pred_probs)
+        #ref_pred_probs = ref_model.predict([queries,neg_samples,anchor_samples])
         #predicted = np.where(pred_probs>0.5,1,0).astype(bool)
         #ref_predicted = np.where(ref_pred_probs>0.5,1,0).astype(bool)
         bad_domains = parsed_df.loc[pred_probs[:,0]<pred_probs[:,1]].domain.values
@@ -64,5 +70,7 @@ if __name__=='__main__':
         time.sleep(2)
         i+=1
         if logging:
+            predicted = pred_probs[:,0] > pred_probs[:,1]
+            ref_predicted = ref_pred_probs[:,0] > ref_pred_probs[:,1]
             diverged = np.sum(predicted==ref_predicted)/predicted.size < 1
-            logger('\n{0} : {1} : {2} : {3}'.format(time.time(),','.join(domain_lists),predicted[0,:len(domain_lists)].astype(int),diverged))
+            logger('\n{0} : {1} : {2} : {3}'.format(time.time(),','.join(domain_lists),np.array(predicted).astype(int),diverged))
