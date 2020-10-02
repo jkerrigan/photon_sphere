@@ -9,19 +9,25 @@ import tensorflow
 import youtokentome as yttm
 
 def make_mask(x):
+    '''
+    Deprecated
+    '''
     y = np.zeros(100)
     print(x)
     y[:x] = 1
     return y
 
 def make_multilabel(x):
+    '''
+    Deprecated
+    '''
     x_ = list(map(lambda xx: int(xx),x.split(' ')))
     y = np.zeros(100)
     y[range(len(x_))] = x_
     return y
 
 def multi_pred(model,query,neg_list,anchor_list):
-    predictions = model.predict([len(neg_list)*[query],neg_list,anchor_list])#list(map(lambda x:model.predict([query,x[0],x[1]]),zip(neg_list,anchor_list)))
+    predictions = model.predict([len(neg_list)*[query],neg_list,anchor_list])
     return predictions.mean(axis=0).flatten()
         
 def load_gravity(dir='/etc/pihole/',table='gravity'):
@@ -55,11 +61,17 @@ def create_dframe(domains,timestamp):
     return new_dataframe
     
 def load_tokenizer():
+    '''
+    Deprecated
+    '''
     with open('tokenizer.pickle', 'rb') as handle:
         tokenizer = pickle.load(handle)
     return tokenizer
 
 def load_sentpiece():
+    ''' 
+    Deprecated
+    '''
     serialized_model_proto = tensorflow.gfile.GFile('./sentpiece/m.model', 'rb').read()
     sp = spm.SentencePieceProcessor()
     sp.load_from_serialized_proto(serialized_model_proto)
@@ -71,18 +83,20 @@ def load_yttm():
     return bpe
         
 def parse_data(df):
+    '''
+    Deprecated due to no use.
+    '''
     df_ = df.copy()
     df_['domain'] = df_['domain'].apply(lambda x: x.replace('.',' ').replace('-',' '))
 #    format_df = df.groupby('timestamp').sum().reset_index()
 #    format_df['domain'] = df.groupby('timestamp')['domain'].apply(lambda x: '|'.join(x)).reset_index()['domain']
 #    format_df['domain_list'] = df.groupby('timestamp')['domain'].apply(lambda x: ','.join(x)).reset_index()['domain']
 #    format_df['mask_count'] = df.groupby('timestamp')['domain'].apply(lambda x: len(x)).reset_index()['domain']
-    #format_df['domain'] = format_df['domain'].apply(lambda x: ' '.join(x.split('.')))
+#    format_df['domain'] = format_df['domain'].apply(lambda x: ' '.join(x.split('.')))
 #    format_df['blocked_chain'] = df.groupby('timestamp')['blocked'].apply(lambda x: ' '.join([str(i) for i in x])).reset_index()['blocked']
     return df_
 
 def prep_data(df,timestamps,tokenizer=None):
-    #print(df.domain)
     encoded_queries = pad_sequences(tokenizer.encode(list(df.loc[df.timestamp>timestamps[1]].domain.values), output_type=yttm.OutputType.ID),30,padding='post') #change null space to |
     df_neg = df.loc[(df.blocked==0)&(df.timestamp<timestamps[1])].domain.values
     df_neg = df_neg[:len(encoded_queries)]
@@ -95,7 +109,7 @@ def prep_data(df,timestamps,tokenizer=None):
 def run_all(tokenizer=None,timestamp=None):
     if not tokenizer:
         tokenizer = load_tokenizer()
-    buffer_timestamp = str(int(timestamp)-1000)
+    buffer_timestamp = str(int(timestamp)-1000) 
     dframe = load_query_list(timestamp=buffer_timestamp)
     new_entries = np.sum(dframe.timestamp>timestamp)
     i = 0
@@ -107,30 +121,23 @@ def run_all(tokenizer=None,timestamp=None):
         new_entries = np.sum(dframe.timestamp>timestamp)
         i+=1
     most_recent_timestamp = dframe.timestamp.iloc[-1]
-#    dframe['timestamp'] = dframe.timestamp.round(-1)
-#    parsed_dframe = parse_data(dframe).iloc[-1] # pull a single timestamp
-    parsed_dframe = parse_data(dframe)
-    token_queries,token_neg,token_pos = prep_data(parsed_dframe,timestamps=[buffer_timestamp,timestamp],tokenizer=tokenizer)
+#    parsed_dframe = parse_data(dframe)
+    token_queries,token_neg,token_pos = prep_data(dframe,timestamps=[buffer_timestamp,timestamp],tokenizer=tokenizer)
     parsed_dframe = parsed_dframe.loc[parsed_dframe.timestamp > timestamp].reset_index()
     return token_queries,token_neg,token_pos,parsed_dframe,most_recent_timestamp
 
 def triplet_loss(true,pred):
-    M = 10.
-    loss = tf.reduce_mean(tf.maximum(pred[:,0] - pred[:,1] + M,0),axis=-1)
+    M = 1.
+    loss = tf.reduce_mean(tf.maximum(pred[:,0]**2 - pred[:,1]**2 + M,0))
     return loss
 
 def custom_acc(true,pred):
-    #pred_ad = tf.cast(tf.where(pred[:,0] < pred[:,1] ,1,0),tf.int16)
-    #pred_noad = tf.cast(tf.where(pred[:,1] > pred[:,0] ,0,1),tf.int16)
-    #true = tf.ones_like(pred_ad,dtype=tf.int16)#tf.cast(true,tf.int16)
-    #false = tf.zeros_like(pred_ad,dtype=tf.int16)
-    #total = tf.keras.backend.sum(tf.cast(pred_ad==true,tf.float32)) + \
-    #                                                tf.keras.backend.sum(tf.cast(pred_noad==false,tf.float32))
-    return 0.#total/tf.cast(tf.size(pred),tf.float32)
+    pred_ad = tf.cast(tf.where(pred[:,0] < pred[:,1] ,1,0),tf.int16)
+    total = tf.keras.backend.sum(tf.cast(pred_ad,tf.float32))
+    return total/tf.cast(tf.size(pred_ad),tf.float32)
 
 def load_model():
-#    model = tf.keras.models.load_model('./models/dns_anhilator.h5')
-    model = tf.keras.models.load_model('./models/metric_model.h5',custom_objects={'triplet_loss':triplet_loss,'custom_acc':custom_acc})
+    model = tf.keras.models.load_model('./models/siamese_metric_triplet_loss.h5',custom_objects={'triplet_loss':triplet_loss,'custom_acc':custom_acc})
     return model
 
 def online_learn(learner,ref,eps=0.1):
@@ -154,10 +161,3 @@ if __name__=='__main__':
 #    test_df = pd.DataFrame({'id':[1],'type':[1],'domain':'old.reddit.com','enabled':[1],'date_added':1600316117,
 #                            'date_modified':1600316117,'comment':'just a test domain'})
 #    update_gravity(pd.concat([df,test_df]))
-#id                                  1
-#type                                1
-#domain           gateway.dunk.com
-#enabled                             1
-#date_added                 1600316117
-#date_modified              1600316117
-#comment          Added from Query Log

@@ -29,12 +29,6 @@ if __name__=='__main__':
             print('Ad domains being vaporized in the photon sphere...')
             with open('photonSphere_list.txt','a') as f:
                 [f.write('\n{0}'.format(i)) for i in bad_domains]
-#            os.system('pihole -b {0}'.format(bad_domains))
-            #bad_df = fn.create_dframe(bad_domains,max_timestamp)
-            #df = pd.concat([df,bad_df])
-            #fn.update_gravity(df)
+#            os.system('pihole -b {0}'.format(bad_domains)) #updates blacklist from command line
         time.sleep(1)
         i+=1
-    #    if (i%1000 == 0) and (i!=0):
-    #        print('Flushing cache and restarting dns..')
-    #        os.system('pihole restartdns')
