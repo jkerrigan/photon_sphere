@@ -123,8 +123,8 @@ def run_all(tokenizer=None,timestamp=None):
     most_recent_timestamp = dframe.timestamp.iloc[-1]
 #    parsed_dframe = parse_data(dframe)
     token_queries,token_neg,token_pos = prep_data(dframe,timestamps=[buffer_timestamp,timestamp],tokenizer=tokenizer)
-    parsed_dframe = parsed_dframe.loc[parsed_dframe.timestamp > timestamp].reset_index()
-    return token_queries,token_neg,token_pos,parsed_dframe,most_recent_timestamp
+    dframe = dframe.loc[dframe.timestamp > timestamp].reset_index()
+    return token_queries,token_neg,token_pos,dframe,most_recent_timestamp
 
 def triplet_loss(true,pred):
     M = 1.
@@ -132,9 +132,12 @@ def triplet_loss(true,pred):
     return loss
 
 def custom_acc(true,pred):
-    pred_ad = tf.cast(tf.where(pred[:,0] < pred[:,1] ,1,0),tf.int16)
-    total = tf.keras.backend.sum(tf.cast(pred_ad,tf.float32))
-    return total/tf.cast(tf.size(pred_ad),tf.float32)
+    # Causing issues with slicing, look into using
+    # lamba layer to slice
+#    pred_ct = tf.keras.layers.Lambda(lambda x: pred[:,0] < pred[:,1])
+#    pred_ad = tf.cast(tf.where(pred_ct ,1,0),tf.int16)
+#    total = tf.keras.backend.sum(tf.cast(pred_ad,tf.float32))
+    return 0.#total/tf.cast(tf.size(pred_ad),tf.float32)
 
 def load_model():
     model = tf.keras.models.load_model('./models/siamese_metric_triplet_loss.h5',custom_objects={'triplet_loss':triplet_loss,'custom_acc':custom_acc})

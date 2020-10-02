@@ -19,7 +19,7 @@ if __name__=='__main__':
     while True:
         tokens,masks,labels,parsed_df,max_timestamp = fn.run_all(tokenizer=tokenizer,timestamp=max_timestamp)
         print('{0} pieces of matter entering the photon sphere..'.format(len(tokens)))
-        predicted = np.where(model.predict([tokens,masks])>0.5,1,0).astype(bool)
+        predicted = np.where(model.predict([tokens,masks])>0.5,1,0).astype(bool) #based on old model input FIX!
         domain_lists = list(map(lambda x: x.split(','),parsed_df.domain_list.values))
         bad_domains = list(map(lambda x: np.array(x[0])[x[1][:len(x[0])]],zip(domain_lists,predicted)))
         bad_domains = [i[0] for i in bad_domains if len(i)>0]
