@@ -28,7 +28,7 @@ def make_multilabel(x):
 
 def multi_pred(model,query,neg_list,anchor_list):
     predictions = model.predict([len(neg_list)*[query],neg_list,anchor_list])
-    return predictions.mean(axis=0).flatten()
+    return predictions[:,0].mean()#(predictions[:,0]>predictions[:,1]).mean()
         
 def load_gravity(dir='/etc/pihole/',table='gravity'):
     db_connect = create_engine('sqlite:///'+dir+'gravity.db')
@@ -97,14 +97,18 @@ def parse_data(df):
     return df_
 
 def prep_data(df,timestamps,tokenizer=None):
-    encoded_queries = pad_sequences(tokenizer.encode(list(df.loc[df.timestamp>timestamps[1]].domain.values), output_type=yttm.OutputType.ID),30,padding='post') #change null space to |
-    df_neg = df.loc[(df.blocked==0)&(df.timestamp<timestamps[1])].domain.values
-    df_neg = df_neg[:len(encoded_queries)]
-    df_anchors = df.loc[(df.blocked==1)&(df.timestamp<timestamps[1])].domain.values
-    df_anchors = df_anchors[:len(encoded_queries)]
+    encoded_queries = pad_sequences(tokenizer.encode(list(df.loc[df.timestamp>timestamps[1]].domain.values), output_type=yttm.OutputType.ID),30,padding='post')
+    df_neg = df.loc[(df.blocked==1)&(df.timestamp<timestamps[1])].domain.values
+    df_anchors = df.loc[(df.blocked==0)&(df.timestamp<timestamps[1])].domain.values
+    df_pos = df.loc[(df.blocked==0)&(df.timestamp<timestamps[1])].domain.values
+    min_len = np.min([len(encoded_queries),len(df_neg),len(df_anchors)])
+    df_neg = df_neg[:min_len]
+    df_pos = df_pos[-min_len:]
+    df_anchors = df_anchors[:min_len]
     encoded_neg = pad_sequences(tokenizer.encode(list(df_neg), output_type=yttm.OutputType.ID),30,padding='post')
     encoded_anchors = pad_sequences(tokenizer.encode(list(df_anchors), output_type=yttm.OutputType.ID),30,padding='post')
-    return encoded_queries,encoded_neg,encoded_anchors
+    encoded_pos = pad_sequences(tokenizer.encode(list(df_pos), output_type=yttm.OutputType.ID),30,padding='post')
+    return encoded_queries,encoded_pos,encoded_neg,encoded_anchors
 
 def run_all(tokenizer=None,timestamp=None):
     if not tokenizer:
@@ -122,9 +126,9 @@ def run_all(tokenizer=None,timestamp=None):
         i+=1
     most_recent_timestamp = dframe.timestamp.iloc[-1]
 #    parsed_dframe = parse_data(dframe)
-    token_queries,token_neg,token_pos = prep_data(dframe,timestamps=[buffer_timestamp,timestamp],tokenizer=tokenizer)
+    token_queries,token_pos,token_neg,token_anchor = prep_data(dframe,timestamps=[buffer_timestamp,timestamp],tokenizer=tokenizer)
     dframe = dframe.loc[dframe.timestamp > timestamp].reset_index()
-    return token_queries,token_neg,token_pos,dframe,most_recent_timestamp
+    return token_queries,token_pos,token_neg,token_anchor,dframe,most_recent_timestamp
 
 def triplet_loss(true,pred):
     M = 1.
@@ -144,10 +148,6 @@ def load_model():
     return model
 
 def online_learn(learner,ref,eps=0.1):
-    learner_entropy = -np.sum(learner*np.log(learner+1e-5*np.random.randn(np.shape(learner)[1])))
-    ref_entropy = -np.sum(ref*np.log(ref+1e-5*np.random.randn(np.shape(ref)[1])))
-
-    learner_labels = np.where(learner > 0.5, 1, 0)
     ref_labels = np.where(ref > 0.5, 1, 0)
     print('Models diverge: {0}'.format(np.sum(learner_labels==ref_labels)/ref_labels.size < 1))
     if np.random.rand() > eps:
