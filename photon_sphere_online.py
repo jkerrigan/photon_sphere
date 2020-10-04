@@ -10,7 +10,7 @@ import os
 
 
 logging = True
-online_learning = False
+online_learning = True
 
 def logger(metadata):
     with open('online.log','a') as f:
@@ -28,7 +28,7 @@ if __name__=='__main__':
     ref_model = tf.keras.models.clone_model(model) #reference model
     ref_model.set_weights(model.get_weights())
 
-    model.optimizer.lr.assign(1e-5)
+    model.optimizer.lr.assign(1e-4)
     df = fn.load_gravity(table='domainlist')
     epsilon = 0.1
     i = 0
@@ -50,14 +50,14 @@ if __name__=='__main__':
         #ref_pred_probs = ref_model.predict([queries,neg_samples,anchor_samples])
         #predicted = np.where(pred_probs>0.5,1,0).astype(bool)
         #ref_predicted = np.where(ref_pred_probs>0.5,1,0).astype(bool)
-        bad_domains = parsed_df.loc[pred_probs>0.6].domain.values
+        bad_domains = parsed_df.loc[pred_probs>0.8].domain.values
         #domain_lists = parsed_df.domain_list.split(',')
         #bad_domains = np.array(domain_lists)[predicted[0,:len(domain_lists)]]
         #bad_domains = [i for i in bad_domains if len(i)>0]
-        bad_domains = [i for i in bad_domains if i not in gravity and i not in df['domain'].values and i not in bad_domains_all]
+        bad_domains = [i for i in bad_domains if (i not in gravity) and (i not in df['domain'].values) and (i not in bad_domains_all)]
         bad_domains_all.extend(bad_domains)
         print(bad_domains)
-        print(pred_probs[pred_probs>0.6])
+        print(pred_probs[pred_probs>0.8])
         if (len(bad_domains) > 0) and (i != 0):
             print('Ad domains being vaporized in the photon sphere...')
             with open('photonSphere_list.txt','a') as f:
