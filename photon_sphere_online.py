@@ -41,7 +41,7 @@ if __name__=='__main__':
         print('{0} pieces of matter entering the photon sphere..'.format(len(parsed_df)))
 #        print(tokens.shape)
         print('queries shape',np.shape(queries))
-        print('anchor shape',np.shape(anchor_samples))
+        print('anchor shape',np.shape(anchor_pos_samples))
         domain_lists = parsed_df.domain.values
         #pred_probs = model.predict([queries,neg_samples,anchor_samples])
         pred_probs = np.array(list(map(lambda x:fn.multi_pred(model,x,neg_samples,anchor_pos_samples,anchor_neg_samples),queries)))
@@ -79,7 +79,7 @@ if __name__=='__main__':
         time.sleep(2)
         i+=1
         if logging:
-            predicted = pred_probs > 0.9#pred_probs[:,0] > pred_probs[:,1]
+            predicted = pred_probs > 0.5#pred_probs[:,0] > pred_probs[:,1]
             #ref_predicted = ref_pred_probs > 0.9#ref_pred_probs[:,0] > ref_pred_probs[:,1]
             diverged = False#np.sum(predicted==ref_predicted)/predicted.size < 1
             logger('\n{0} : {1} : {2} : {3}'.format(time.time(),','.join(domain_lists),np.array(predicted).astype(int),diverged))
