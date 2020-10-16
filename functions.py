@@ -95,7 +95,7 @@ def prep_data(df,timestamps,tokenizer=None):
     df_pos_anchors = df.loc[(df.blocked==0)&(df.timestamp<timestamps[1])].domain.values
     df_neg_anchors = df.loc[(df.blocked==1)&(df.timestamp<timestamps[1])].domain.values
     df_pos = df.loc[(df.blocked==0)&(df.timestamp<timestamps[1])].domain.values
-    min_len = np.min([len(encoded_queries),len(df_neg),len(df_anchors)])
+    min_len = np.min([len(encoded_queries),len(df_neg),len(df_pos_anchors),len(df_neg_anchors)])
     df_neg = df_neg[:min_len]
     df_pos = df_pos[-min_len:]
     df_pos_anchors = df_pos_anchors[:min_len]
@@ -141,10 +141,13 @@ def quadruplet_loss(true,pred):
     return loss
 
 def custom_acc(true,pred):
-    pred_compare = tf.where(pred[:,0] < pred[:,1],True,False) & tf.where(pred[:,2] < pred[:,1],True,False)
-    total = tf.keras.backend.sum(tf.cast(pred_compare,tf.float32))
-    return total/tf.cast(tf.size(pred_compare),tf.float32)
-
+    try:
+        pred_compare = tf.where(pred[:,0] < pred[:,1],True,False) & tf.where(pred[:,2] < pred[:,1],True,False)
+        total = tf.keras.backend.sum(tf.cast(pred_compare,tf.float32))
+        return total/tf.cast(tf.size(pred_compare),tf.float32)
+    except:
+        return 0
+    
 def load_model():
     model = tf.keras.models.load_model('./models/siamese_metric_quadruplet_loss_v1.h5',custom_objects={'quadruplet_loss':quadruplet_loss,'custom_acc':custom_acc})
     return model
