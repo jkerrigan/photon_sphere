@@ -138,16 +138,21 @@ def triplet_loss(true,pred):
     loss = tf.reduce_mean(tf.maximum(pred[:,0]**2 - pred[:,1]**2 + M,0))
     return loss
 
+def quadruplet_loss(true,pred):
+    m1 = 1.
+    m2 = .5
+    mask1 = tf.cast((pred[:,3] < pred[:,0] + m1) & (pred[:,1] < pred[:,2] + m2),tf.float32)
+    loss = tf.reduce_sum(tf.maximum(tf.multiply(pred[:,0]**2 - pred[:,1]**2 + m1,mask1),0)) +\
+               tf.reduce_sum(tf.maximum(tf.multiply(pred[:,2]**2 - pred[:,3]**2 + m2,mask1),0))
+    return loss
+
 def custom_acc(true,pred):
-    # Causing issues with slicing, look into using
-    # lamba layer to slice
-#    pred_ct = tf.keras.layers.Lambda(lambda x: pred[:,0] < pred[:,1])
-#    pred_ad = tf.cast(tf.where(pred_ct ,1,0),tf.int16)
-#    total = tf.keras.backend.sum(tf.cast(pred_ad,tf.float32))
-    return 0.#total/tf.cast(tf.size(pred_ad),tf.float32)
+    pred_compare = tf.where(pred[:,0] < pred[:,1],True,False) & tf.where(pred[:,2] < pred[:,1],True,False)
+    total = tf.keras.backend.sum(tf.cast(pred_compare,tf.float32))
+    return total/tf.cast(tf.size(pred_compare),tf.float32)
 
 def load_model():
-    model = tf.keras.models.load_model('./models/siamese_metric_triplet_loss.h5',custom_objects={'triplet_loss':triplet_loss,'custom_acc':custom_acc})
+    model = tf.keras.models.load_model('./models/siamese_metric_quadruplet_loss_v1.h5',custom_objects={'quadruplet_loss':quadruplet_loss,'custom_acc':custom_acc})
     return model
 
 def online_learn(learner,ref,eps=0.1):

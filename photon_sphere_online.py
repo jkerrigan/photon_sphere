@@ -10,7 +10,7 @@ import os
 
 
 logging = True
-online_learning = True
+online_learning = False
 
 def logger(metadata):
     with open('online.log','a') as f:
