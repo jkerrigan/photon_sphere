@@ -9,18 +9,14 @@ import tensorflow
 import youtokentome as yttm
 
 def make_mask(x):
-    '''
-    Deprecated
-    '''
+    """Deprecated"""
     y = np.zeros(100)
     print(x)
     y[:x] = 1
     return y
 
 def make_multilabel(x):
-    '''
-    Deprecated
-    '''
+    """Deprecated"""
     x_ = list(map(lambda xx: int(xx),x.split(' ')))
     y = np.zeros(100)
     y[range(len(x_))] = x_
@@ -64,17 +60,13 @@ def create_dframe(domains,timestamp):
     return new_dataframe
     
 def load_tokenizer():
-    '''
-    Deprecated
-    '''
+    """Deprecated"""
     with open('tokenizer.pickle', 'rb') as handle:
         tokenizer = pickle.load(handle)
     return tokenizer
 
 def load_sentpiece():
-    ''' 
-    Deprecated
-    '''
+    """Deprecated"""
     serialized_model_proto = tensorflow.gfile.GFile('./sentpiece/m.model', 'rb').read()
     sp = spm.SentencePieceProcessor()
     sp.load_from_serialized_proto(serialized_model_proto)
@@ -86,9 +78,7 @@ def load_yttm():
     return bpe
         
 def parse_data(df):
-    '''
-    Deprecated due to no use.
-    '''
+    """Deprecated due to no use."""
     df_ = df.copy()
     df_['domain'] = df_['domain'].apply(lambda x: x.replace('.',' ').replace('-',' '))
 #    format_df = df.groupby('timestamp').sum().reset_index()
@@ -139,6 +129,7 @@ def triplet_loss(true,pred):
     return loss
 
 def quadruplet_loss(true,pred):
+    """Modified quadruplet loss with online semi-hard negative mining."""
     m1 = 1.
     m2 = .5
     mask1 = tf.cast((pred[:,3] < pred[:,0] + m1) & (pred[:,1] < pred[:,2] + m2),tf.float32)
@@ -167,7 +158,7 @@ def online_learn(learner,ref,eps=0.1):
     return candidate_labels
         
 if __name__=='__main__':
-    print('Test is a success.')
+    print('Success.')
 #    df = load_gravity(table='domainlist')
 #    test_df = pd.DataFrame({'id':[1],'type':[1],'domain':'old.reddit.com','enabled':[1],'date_added':1600316117,
 #                            'date_modified':1600316117,'comment':'just a test domain'})
