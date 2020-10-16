@@ -28,7 +28,10 @@ def make_multilabel(x):
 
 def multi_pred(model,query,neg_list,anchor_list):
     predictions = model.predict([len(neg_list)*[query],neg_list,anchor_list])
-    return predictions[:,0].mean()#(predictions[:,0]>predictions[:,1]).mean()
+    mean_dist = predictions[:,0].mean()
+    mean_rel = (predictions[:,0]>predictions[:,1]).mean()
+    #print('Dist',mean_dist,'Rel',mean_rel)
+    return mean_rel#np.min([mean_dist,mean_rel])
         
 def load_gravity(dir='/etc/pihole/',table='gravity'):
     db_connect = create_engine('sqlite:///'+dir+'gravity.db')
