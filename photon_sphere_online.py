@@ -34,7 +34,7 @@ if __name__=='__main__':
     i = 0
     bad_domains_all = []
     while True:
-        queries,pos_samples,neg_samples,anchor_samples,parsed_df,max_timestamp = fn.run_all(tokenizer=tokenizer,timestamp=max_timestamp)
+        queries,pos_samples,neg_samples,anchor_pos_samples,anchor_neg_samples,parsed_df,max_timestamp = fn.run_all(tokenizer=tokenizer,timestamp=max_timestamp)
         if i == 0:
             i =+ 1
             continue
@@ -44,8 +44,8 @@ if __name__=='__main__':
         print('anchor shape',np.shape(anchor_samples))
         domain_lists = parsed_df.domain.values
         #pred_probs = model.predict([queries,neg_samples,anchor_samples])
-        pred_probs = np.array(list(map(lambda x:fn.multi_pred(model,x,neg_samples,anchor_samples),queries)))
-        ref_pred_probs = np.array(list(map(lambda x:fn.multi_pred(ref_model,x,neg_samples,anchor_samples),queries)))
+        pred_probs = np.array(list(map(lambda x:fn.multi_pred(model,x,neg_samples,anchor_pos_samples,anchor_neg_samples),queries)))
+#        ref_pred_probs = np.array(list(map(lambda x:fn.multi_pred(ref_model,x,neg_samples,anchor_samples),queries)))
         #print(pred_probs)
         #ref_pred_probs = ref_model.predict([queries,neg_samples,anchor_samples])
         #predicted = np.where(pred_probs>0.5,1,0).astype(bool)
@@ -66,10 +66,9 @@ if __name__=='__main__':
             #bad_df = fn.create_dframe(bad_domains,max_timestamp)
             #df = pd.concat([df,bad_df])
             #fn.update_gravity(df)
-
-            #        online_labels = fn.online_learn(pred_probs,ref_pred_probs,eps=epsilon)
+         #online_labels = fn.online_learn(pred_probs,ref_pred_probs,eps=epsilon)
 #        model.fit([tokens,masks],online_labels)
-        if online_learning:
+        if online_learning: # not ready for quadruplet loss model
             print('Teaching this thing some new tricks...')
             print(np.shape(pos_samples),np.shape(anchor_samples),np.shape(neg_samples))
             for j,prob in enumerate(pred_probs):
@@ -81,6 +80,6 @@ if __name__=='__main__':
         i+=1
         if logging:
             predicted = pred_probs > 0.9#pred_probs[:,0] > pred_probs[:,1]
-            ref_predicted = ref_pred_probs > 0.9#ref_pred_probs[:,0] > ref_pred_probs[:,1]
-            diverged = np.sum(predicted==ref_predicted)/predicted.size < 1
+            #ref_predicted = ref_pred_probs > 0.9#ref_pred_probs[:,0] > ref_pred_probs[:,1]
+            diverged = False#np.sum(predicted==ref_predicted)/predicted.size < 1
             logger('\n{0} : {1} : {2} : {3}'.format(time.time(),','.join(domain_lists),np.array(predicted).astype(int),diverged))

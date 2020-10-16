@@ -22,10 +22,10 @@ def make_multilabel(x):
     y[range(len(x_))] = x_
     return y
 
-def multi_pred(model,query,neg_list,anchor_list):
-    predictions = model.predict([len(neg_list)*[query],neg_list,anchor_list])
-    mean_dist = predictions[:,0].mean()
-    mean_rel = (predictions[:,0]>predictions[:,1]).mean()
+def multi_pred(model,query,neg_list,anchor_pos_list,anchor_neg_list):
+    predictions = model.predict([len(neg_list)*[query],neg_list,anchor_pos_list,anchor_neg_list])
+    #mean_dist = predictions[:,0].mean()
+    mean_rel = (predictions[:,0]>predictions[:,3]).mean()
     #print('Dist',mean_dist,'Rel',mean_rel)
     return mean_rel#np.min([mean_dist,mean_rel])
         
@@ -92,16 +92,19 @@ def parse_data(df):
 def prep_data(df,timestamps,tokenizer=None):
     encoded_queries = pad_sequences(tokenizer.encode(list(df.loc[df.timestamp>timestamps[1]].domain.values), output_type=yttm.OutputType.ID),30,padding='post')
     df_neg = df.loc[(df.blocked==1)&(df.timestamp<timestamps[1])].domain.values
-    df_anchors = df.loc[(df.blocked==0)&(df.timestamp<timestamps[1])].domain.values
+    df_pos_anchors = df.loc[(df.blocked==0)&(df.timestamp<timestamps[1])].domain.values
+    df_neg_anchors = df.loc[(df.blocked==1)&(df.timestamp<timestamps[1])].domain.values
     df_pos = df.loc[(df.blocked==0)&(df.timestamp<timestamps[1])].domain.values
     min_len = np.min([len(encoded_queries),len(df_neg),len(df_anchors)])
     df_neg = df_neg[:min_len]
     df_pos = df_pos[-min_len:]
-    df_anchors = df_anchors[:min_len]
+    df_pos_anchors = df_pos_anchors[:min_len]
+    df_neg_anchors = df_neg_anchors[-min_len:]
     encoded_neg = pad_sequences(tokenizer.encode(list(df_neg), output_type=yttm.OutputType.ID),30,padding='post')
-    encoded_anchors = pad_sequences(tokenizer.encode(list(df_anchors), output_type=yttm.OutputType.ID),30,padding='post')
+    encoded_pos_anchors = pad_sequences(tokenizer.encode(list(df_pos_anchors), output_type=yttm.OutputType.ID),30,padding='post')
+    encoded_neg_anchors = pad_sequences(tokenizer.encode(list(df_neg_anchors), output_type=yttm.OutputType.ID),30,padding='post')
     encoded_pos = pad_sequences(tokenizer.encode(list(df_pos), output_type=yttm.OutputType.ID),30,padding='post')
-    return encoded_queries,encoded_pos,encoded_neg,encoded_anchors
+    return encoded_queries,encoded_pos,encoded_neg,encoded_pos_anchors,encoded_neg_anchors
 
 def run_all(tokenizer=None,timestamp=None):
     if not tokenizer:
@@ -119,9 +122,9 @@ def run_all(tokenizer=None,timestamp=None):
         i+=1
     most_recent_timestamp = dframe.timestamp.iloc[-1]
 #    parsed_dframe = parse_data(dframe)
-    token_queries,token_pos,token_neg,token_anchor = prep_data(dframe,timestamps=[buffer_timestamp,timestamp],tokenizer=tokenizer)
+    token_queries,token_pos,token_neg,token_pos_anchor,token_neg_anchor = prep_data(dframe,timestamps=[buffer_timestamp,timestamp],tokenizer=tokenizer)
     dframe = dframe.loc[dframe.timestamp > timestamp].reset_index()
-    return token_queries,token_pos,token_neg,token_anchor,dframe,most_recent_timestamp
+    return token_queries,token_pos,token_neg,token_pos_anchor,token_neg_anchor,dframe,most_recent_timestamp
 
 def triplet_loss(true,pred):
     M = 1.
