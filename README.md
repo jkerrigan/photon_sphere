@@ -13,7 +13,7 @@ The model is composed of a siamese embedding layer with a distance metric learni
 ## Notes
 - YouTokenToMe(YTTM) vocab size is 300 by default (too large results in overfitting)
 - Model can be run in real-time or on the archived Pi Hole SQL DNS query logs
-- 
+- Online learning aspect is still in development
 
 ## Requirements
 - tensorflow
