@@ -14,4 +14,4 @@ def test_create_dframe():
     domains = ['test.domain1','test.domain2','test.domain3','test.domain4']
     timestamp = [0,1,2,3]
     df = fn.create_dframe(domains,timestamp)
-    assert df['domain'].values=='test.domain1'
+    assert df['domain'].values[0]=='test.domain1'
